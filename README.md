@@ -51,15 +51,16 @@ After performing LDL<sup>T</sup> decomposition, where the matrix \( A \) is deco
      \]
      Back substitution is used to solve \( L^T x = y \).
 
-## Project Structure
+## Matrix Representation in Band Form
 
-### Data Directory
+In this project, matrices are handled in a banded format to optimize storage and computation. Specifically, the matrix is represented using:
 
-- **`AL.txt`**: File containing the lower triangular part of the matrix \( AL \).
-- **`D.txt`**: File containing the diagonal matrix \( D \).
-- **`F.txt`**: File containing the vector \( F \) for solving the system \( Ax = F \).
-- **`input.txt`**: File containing the matrix dimensions \( n \) and \( k \).
-- **`x.txt`**: Output file for the solution vector \( x \).
+- **`AL`**: The lower triangular part of the matrix with dimensions \( n \times k \), where \( k \) is the number of diagonals adjacent to the main diagonal \( D \).
+- **`D`**: The diagonal matrix with entries on the main diagonal.
+
+### Restoring the Matrix
+
+The matrix \( A \) is reconstructed from the components \( L \), \( D \), and \( L^T \) in its banded form. The matrix is printed in its full form for verification.
 
 ## How to Build and Run
 
