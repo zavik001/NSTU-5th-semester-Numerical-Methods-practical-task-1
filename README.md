@@ -1,5 +1,3 @@
-# NSTU 5th Semester Numerical Methods Practical Task 1
-
 # LDL<sup>T</sup> Decomposition Project
 
 This project provides an implementation of the LDL<sup>T</sup> decomposition for symmetric matrices. It includes utilities for matrix operations and solving linear systems based on the LDL<sup>T</sup> decomposition method. The decomposition splits a matrix \( A \) into three components: \( L \) (lower triangular matrix), \( D \) (diagonal matrix with entries ±1), and \( L^T \) (transpose of \( L \)).
