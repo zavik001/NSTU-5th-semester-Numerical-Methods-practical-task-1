@@ -55,13 +55,6 @@ After performing LDL<sup>T</sup> decomposition, where the matrix \( A \) is deco
 
 In this project, matrices are handled in a banded format to optimize storage and computation. Specifically, the matrix is represented using:
 
-- **`AL`**: The lower triangular part of the matrix with dimensions \( n \times k \), where \( k \) is the number of diagonals adjacent to the main diagonal \( D \).
-- **`D`**: The diagonal matrix with entries on the main diagonal.
-
-### Restoring the Matrix
-
-The matrix \( A \) is reconstructed from the components \( L \), \( D \), and \( L^T \) in its banded form. The matrix is printed in its full form for verification.
-
 ## How to Build and Run
 
 1. **Build the Project**: Use the `Makefile` to compile the project. The build targets will create executables for different floating point precisions.
