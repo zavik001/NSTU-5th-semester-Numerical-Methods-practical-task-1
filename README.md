@@ -1,6 +1,6 @@
-# NSTU-5th-semester-Numerical-Methods-practical-task-1
+# NSTU 5th Semester Numerical Methods Practical Task 1
 
-# LDLT Decomposition Project
+# LDL<sup>T</sup> Decomposition Project
 
 This project provides an implementation of the LDL<sup>T</sup> decomposition for symmetric matrices. It includes utilities for matrix operations and solving linear systems based on the LDL<sup>T</sup> decomposition method. The decomposition splits a matrix \( A \) into three components: \( L \) (lower triangular matrix), \( D \) (diagonal matrix with entries ±1), and \( L^T \) (transpose of \( L \)).
 
@@ -57,13 +57,7 @@ The linear system \( Ax = F \) is solved by performing LDL<sup>T</sup> decomposi
 
 For practical implementation, the `solveSystem()` function in the provided code performs these steps to find the solution vector \( x \) given the decomposed matrices and the vector \( F \).
 
-
 ## Project Structure
-
-- **`Makefile`**: Build script for compiling the project.
-- **`README.md`**: This file.
-- **`.gitignore`**: Specifies files and directories to be ignored by Git.
-- **`.vscode/settings.json`**: VSCode settings for the project.
 
 ### Data Directory
 
@@ -73,16 +67,8 @@ For practical implementation, the `solveSystem()` function in the provided code 
 - **`input.txt`**: File containing the matrix dimensions \( n \) and \( k \).
 - **`x.txt`**: Output file for the solution vector \( x \).
 
-### Source Code Directory (`ldlt`)
-
-- **`LDLT.cpp`**: Implementation of the LDL<sup>T</sup> decomposition and related functions.
-- **`ldlt_double.exe`**: Executable for double precision floating point computations.
-- **`ldlt_float.exe`**: Executable for single precision floating point computations.
-- **`ldlt_long_double.exe`**: Executable for extended precision floating point computations.
-
 ## How to Build and Run
 
 1. **Build the Project**: Use the `Makefile` to compile the project. The build targets will create executables for different floating point precisions.
    ```sh
    make
-
