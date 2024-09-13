@@ -51,7 +51,7 @@ After performing LDL<sup>T</sup> decomposition, where the matrix \( A \) is deco
 
 ## Matrix Representation in Band Form
 
-In this project, matrices are handled in a banded format to optimize storage and computation. Specifically, the matrix is represented using:
+In this project, matrices are handled in a banded format to optimize storage and computation. 
 
 ## How to Build and Run
 
