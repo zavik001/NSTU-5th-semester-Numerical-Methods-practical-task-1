@@ -51,12 +51,6 @@ After performing LDL<sup>T</sup> decomposition, where the matrix \( A \) is deco
      \]
      Back substitution is used to solve \( L^T x = y \).
 
-### Summary
-
-The linear system \( Ax = F \) is solved by performing LDL<sup>T</sup> decomposition and then applying forward substitution, diagonal scaling, and back substitution. This method is efficient for symmetric matrices and leverages the structure of \( L \) and \( D \) to simplify the solution process.
-
-For practical implementation, the `solveSystem()` function in the provided code performs these steps to find the solution vector \( x \) given the decomposed matrices and the vector \( F \).
-
 ## Project Structure
 
 ### Data Directory
