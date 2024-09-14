@@ -24,12 +24,15 @@ private:
     vector<vector<floatingPointType>> matrixAL; // Matrix for decomposition
     vector<floatingPointType> diagD;            // Diagonal elements
     vector<floatingPointType> vectorF;          // Right-hand side vector
-    vector<floatingPointType> y, z, X, result;  // Temporary vectors for solving the system
+    vector<floatingPointType> vectorX;
+    vector<floatingPointType> y, z;
 
     int n; // Matrix size
     int k; // Bandwidth
 
     string solveFilePath; // Path to save solution (x.txt)
+    string AlFilePath;
+    string DFilePath;
 
 public:
     // Constructor to initialize dimensions, reserve memory and load data
@@ -58,16 +61,18 @@ public:
     void performLDLtDecomposition();
 
     // Multiply band matrix by itself to restore the matrix A from L, D, and L^T
-    void multiplyBandMatrix();
+    void returnMatix();
 
     // Solve the system of linear equations
     void solveLinearSystem();
 
     // Print result of matrix-vector multiplication
-    void printMultiplyByVector();
+    void printMultiplyMatrixToVectorX();
 
     // Write the solution (vector X) to a file
     void writeSolutionToFile();
+
+    void printVectors();
 };
 
 #endif // LDLT_HPP

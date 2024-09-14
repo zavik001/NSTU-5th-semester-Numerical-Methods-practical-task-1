@@ -11,9 +11,14 @@ int main()
         string xFilePath = "data/X.txt";
 
         LDLT ldlt(inputFilePath, alFilePath, dFilePath, fFilePath, xFilePath);
+        ldlt.printRestoredMatrix();
         ldlt.performLDLtDecomposition();
+        ldlt.printRestoredMatrix();
         ldlt.solveLinearSystem();
-        ldlt.writeSolutionToFile();
+        ldlt.returnMatix();
+        ldlt.printRestoredMatrix();
+        ldlt.printVectors();
+        ldlt.printMultiplyMatrixToVectorX();
     }
     catch (const exception &e)
     {

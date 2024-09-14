@@ -6,7 +6,7 @@ LDLT::LDLT(const string &inputFilePath,
            const string &dFilePath,
            const string &fFilePath,
            const string &solveFilePath)
-    : solveFilePath(solveFilePath)
+    : solveFilePath(solveFilePath), AlFilePath(alFilePath), DFilePath(dFilePath)
 {
     // Load matrix dimensions
     loadFromFile(inputFilePath);
@@ -15,10 +15,9 @@ LDLT::LDLT(const string &inputFilePath,
     matrixAL.resize(n, vector<floatingPointType>(k, 0.0));
     diagD.resize(n, 0.0);
     vectorF.resize(n, 0.0);
-    X.resize(n, 0.0); // Solution vector
+    vectorX.resize(n, 0.0); // Solution vector
     y.resize(n, 0.0); // Intermediate vector y
     z.resize(n, 0.0); // Intermediate vector z
-    result.resize(n, 0.0);
 
     // Load matrix AL, diagonal D, and vector F from the specified files
     loadFromFile(alFilePath, matrixAL);
@@ -138,41 +137,6 @@ void LDLT::performLDLtDecomposition()
     }
 }
 
-void LDLT::multiplyBandMatrix()
-{
-    // Step 1: Create matrix A to store L * D * L^T
-    vector<vector<floatingPointType>> A(n, vector<floatingPointType>(n, 0.0));
-
-    // Step 2: Compute L * D * L^T
-    for (int i = 0; i < n; i++)
-    {
-        // Diagonal elements of A
-        A[i][i] = diagD[i]; // Only diagonal D[i]
-
-        // Below-diagonal elements
-        for (int j = max(0, i - k); j < i; ++j)
-        {
-            floatingPointType sum = 0.0;
-            for (int m = max(0, j - k); m < j; ++m)
-            {
-                sum += matrixAL[i][k - i + m] * diagD[m] * matrixAL[j][k - j + m]; // L[i,m] * D[m] * L[j,m]
-            }
-            A[i][j] = matrixAL[i][k - i + j] * diagD[j] + sum; // L[i,j] * D[j]
-            A[j][i] = A[i][j];                                 // Symmetry for upper triangular
-        }
-    }
-
-    // Step 3: Output restored matrix A
-    for (int i = 0; i < n; ++i)
-    {
-        for (int j = 0; j < n; ++j)
-        {
-            cout << setw(10) << A[i][j] << " ";
-        }
-        cout << '\n';
-    }
-}
-
 // Solve the system using LDL^T decomposition
 void LDLT::solveLinearSystem()
 {
@@ -199,9 +163,9 @@ void LDLT::solveLinearSystem()
         floatingPointType sum = 0.0;
         for (int j = i + 1; j < n && j <= i + k; ++j)
         {
-            sum += matrixAL[j][k - j + i] * X[j];
+            sum += matrixAL[j][k - j + i] * vectorX[j];
         }
-        X[i] = z[i] - sum;
+        vectorX[i] = z[i] - sum;
     }
 
     // Write solution to file
@@ -217,7 +181,7 @@ void LDLT::writeSolutionToFile()
         throw runtime_error("Could not open file: " + solveFilePath);
     }
 
-    for (const auto &value : X)
+    for (const auto &value : vectorX)
     {
         outFile << value << '\n';
     }
@@ -225,28 +189,59 @@ void LDLT::writeSolutionToFile()
     outFile.close();
 }
 
-// Print result of matrix-vector multiplication
-void LDLT::printMultiplyByVector()
+void LDLT::printVectors()
 {
+    cout << "X:\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << vectorX[i] << '\n';
+    }
+    cout << '\n';   
+    
+    cout << "F:\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << vectorF[i] << '\n';
+    }
+    cout << '\n';
+}
+
+void LDLT::returnMatix()
+{
+    loadFromFile(AlFilePath, matrixAL);
+    loadFromFile(DFilePath, diagD);
+}
+
+// Print result of matrix-vector multiplication
+void LDLT::printMultiplyMatrixToVectorX()
+{
+    vector<floatingPointType> result(n, 0.0);
+
     for (int i = 0; i < n; ++i)
     {
-        for (int j = max(0, i - k); j <= i; ++j)
+        result[i] += diagD[i] * vectorX[i];
+
+        for (int j = 0; j < n; ++j)
         {
-            result[i] += matrixAL[i][k - i + j] * X[j];
-            if (i != j)
+            if (i == j)
             {
-                result[j] += matrixAL[i][k - i + j] * X[i];
+                continue;
+            }
+            else if (j < i && (i - j) <= k)
+            {
+                result[i] += matrixAL[i][k - i + j] * vectorX[j];
+            }
+            else if (i < j && (j - i) <= k)
+            {
+                result[i] += matrixAL[j][k - j + i] * vectorX[j];
             }
         }
     }
 
+    cout << "Result of multiplying matrix (A = AL + D) by vector X:" << endl;
     for (int i = 0; i < n; ++i)
     {
-        result[i] += diagD[i] * X[i];
+        cout << setprecision(7) << result[i] << ' ';
     }
-
-    for (const auto &value : result)
-    {
-        cout << value << '\n';
-    }
+    cout << endl;
 }
