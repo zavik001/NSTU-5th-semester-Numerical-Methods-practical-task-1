@@ -1,6 +1,5 @@
 #include "LDLT.hpp"
 
-// Constructor that initializes matrix, diagonal, vector F, and reserve memory for solution
 LDLT::LDLT(const string &inputFilePath,
            const string &alFilePath,
            const string &dFilePath,
@@ -8,24 +7,20 @@ LDLT::LDLT(const string &inputFilePath,
            const string &solveFilePath)
     : solveFilePath(solveFilePath), AlFilePath(alFilePath), DFilePath(dFilePath)
 {
-    // Load matrix dimensions
     loadFromFile(inputFilePath);
 
-    // Resize vectors and matrix for the problem dimensions
     matrixAL.resize(n, vector<floatingPointType>(k, 0.0));
     diagD.resize(n, 0.0);
     vectorF.resize(n, 0.0);
-    vectorX.resize(n, 0.0); // Solution vector
-    y.resize(n, 0.0); // Intermediate vector y
-    z.resize(n, 0.0); // Intermediate vector z
+    vectorX.resize(n, 0.0);
+    y.resize(n, 0.0);
+    z.resize(n, 0.0);
 
-    // Load matrix AL, diagonal D, and vector F from the specified files
     loadFromFile(alFilePath, matrixAL);
     loadFromFile(dFilePath, diagD);
     loadFromFile(fFilePath, vectorF);
 }
 
-// Load matrix dimensions from a file (n and k)
 void LDLT::loadFromFile(const string &filePath)
 {
     ifstream file(filePath);
@@ -33,11 +28,10 @@ void LDLT::loadFromFile(const string &filePath)
     {
         throw runtime_error("Could not open file: " + filePath);
     }
-    file >> n >> k; // Read matrix dimensions
+    file >> n >> k;
     file.close();
 }
 
-// Load matrix data from a file into a vector (matrix)
 void LDLT::loadFromFile(const string &filePath, vector<vector<floatingPointType>> &matrix)
 {
     ifstream file(filePath);
@@ -55,7 +49,6 @@ void LDLT::loadFromFile(const string &filePath, vector<vector<floatingPointType>
     file.close();
 }
 
-// Load vector data from a file into a 1D vector
 void LDLT::loadFromFile(const string &filePath, vector<floatingPointType> &vector)
 {
     ifstream file(filePath);
@@ -70,7 +63,93 @@ void LDLT::loadFromFile(const string &filePath, vector<floatingPointType> &vecto
     file.close();
 }
 
-// Print matrix AL in a formatted way
+/**
+ * @brief Perform LDL^T decomposition on the matrix A.
+ *
+ * This method performs the decomposition of the matrix A into
+ * a lower triangular matrix (L), a diagonal matrix (D), and the transpose of L (L^T).
+ * The algorithm has a time complexity of O(nk) due to the band structure of the matrix.
+ * OpenMP is used to parallelize the outer loop to improve performance, especially for large matrices.
+ *
+ * @note The decomposition modifies the matrix A in place.
+ */
+void LDLT::performLDLtDecomposition()
+{
+// Parallelizing the outer loop with OpenMP
+#pragma omp parallel for
+    for (int i = 0; i < n; ++i)
+    {
+        floatingPointType sumD = 0.0;
+
+        // Compute the sum for D[i] using previously computed values in L and D
+        for (int j = max(0, i - k); j < i; ++j)
+        {
+            sumD += matrixAL[i][k - i + j] * matrixAL[i][k - i + j] * diagD[j];
+        }
+        diagD[i] -= sumD;
+
+        // Update the L[j][i] elements for subsequent rows
+        for (int j = i + 1; j < n && j <= i + k; ++j)
+        {
+            floatingPointType sumL = 0.0;
+            for (int m = max(0, i - k); m < i; ++m)
+            {
+                sumL += matrixAL[j][k - j + m] * matrixAL[i][k - i + m] * diagD[m];
+            }
+            matrixAL[j][k - j + i] = (matrixAL[j][k - j + i] - sumL) / diagD[i];
+        }
+    }
+}
+
+/**
+ * @brief Solve the system of linear equations using the LDL^T decomposition.
+ *
+ * This method uses forward substitution, diagonal substitution,
+ * and backward substitution to solve the system of equations A * X = F.
+ *
+ * Forward substitution and backward substitution are inherently sequential due to data dependencies,
+ * but diagonal substitution is parallelized with OpenMP, as each element can be computed independently.
+ *
+ * Time complexity is O(nk) due to the band structure of the matrix.
+ */
+void LDLT::solveLinearSystem()
+{
+    // Forward substitution: L * y = F
+    // This loop cannot be parallelized due to the sequential nature of forward substitution.
+    for (int i = 0; i < n; ++i)
+    {
+        floatingPointType sum = 0.0;
+        for (int j = max(0, i - k); j < i; ++j)
+        {
+            sum += matrixAL[i][k - i + j] * y[j];
+        }
+        y[i] = vectorF[i] - sum;
+    }
+
+// Diagonal substitution: D * z = y
+// This loop can be parallelized as each element is independent.
+#pragma omp parallel for
+    for (int i = 0; i < n; ++i)
+    {
+        z[i] = y[i] / diagD[i];
+    }
+
+    // Backward substitution: L^T * X = z
+    // This loop also cannot be parallelized due to sequential data dependencies.
+    for (int i = n - 1; i >= 0; --i)
+    {
+        floatingPointType sum = 0.0;
+        for (int j = i + 1; j < n && j <= i + k; ++j)
+        {
+            sum += matrixAL[j][k - j + i] * vectorX[j];
+        }
+        vectorX[i] = z[i] - sum;
+    }
+
+    // Save the solution to a file
+    writeSolutionToFile();
+}
+
 void LDLT::printMatrixAL()
 {
     for (const auto &row : matrixAL)
@@ -84,7 +163,6 @@ void LDLT::printMatrixAL()
     cout << '\n';
 }
 
-// Print restored matrix after LDL^T decomposition
 void LDLT::printRestoredMatrix()
 {
     for (int i = 0; i < n; i++)
@@ -113,66 +191,6 @@ void LDLT::printRestoredMatrix()
     cout << '\n';
 }
 
-// Perform LDL^T decomposition
-void LDLT::performLDLtDecomposition()
-{
-    for (int i = 0; i < n; ++i)
-    {
-        floatingPointType sumD = 0.0;
-        for (int j = max(0, i - k); j < i; ++j)
-        {
-            sumD += matrixAL[i][k - i + j] * matrixAL[i][k - i + j] * diagD[j];
-        }
-        diagD[i] = diagD[i] - sumD;
-
-        for (int j = i + 1; j < n && j <= i + k; ++j)
-        {
-            floatingPointType sumL = 0.0;
-            for (int m = max(0, i - k); m < i; ++m)
-            {
-                sumL += matrixAL[j][k - j + m] * matrixAL[i][k - i + m] * diagD[m];
-            }
-            matrixAL[j][k - j + i] = (matrixAL[j][k - j + i] - sumL) / diagD[i];
-        }
-    }
-}
-
-// Solve the system using LDL^T decomposition
-void LDLT::solveLinearSystem()
-{
-    // Forward substitution for Ly = F
-    for (int i = 0; i < n; ++i)
-    {
-        floatingPointType sum = 0.0;
-        for (int j = max(0, i - k); j < i; ++j)
-        {
-            sum += matrixAL[i][k - i + j] * y[j];
-        }
-        y[i] = (vectorF[i] - sum);
-    }
-
-    // Diagonal substitution for Dz = y
-    for (int i = 0; i < n; ++i)
-    {
-        z[i] = y[i] / diagD[i];
-    }
-
-    // Backward substitution for L^T X = z
-    for (int i = n - 1; i >= 0; --i)
-    {
-        floatingPointType sum = 0.0;
-        for (int j = i + 1; j < n && j <= i + k; ++j)
-        {
-            sum += matrixAL[j][k - j + i] * vectorX[j];
-        }
-        vectorX[i] = z[i] - sum;
-    }
-
-    // Write solution to file
-    writeSolutionToFile();
-}
-
-// Write solution to a file (vector X)
 void LDLT::writeSolutionToFile()
 {
     ofstream outFile(solveFilePath);
@@ -196,8 +214,8 @@ void LDLT::printVectors()
     {
         cout << vectorX[i] << '\n';
     }
-    cout << '\n';   
-    
+    cout << '\n';
+
     cout << "F:\n";
     for (int i = 0; i < n; i++)
     {
@@ -212,7 +230,6 @@ void LDLT::returnMatix()
     loadFromFile(DFilePath, diagD);
 }
 
-// Print result of matrix-vector multiplication
 void LDLT::printMultiplyMatrixToVectorX()
 {
     vector<floatingPointType> result(n, 0.0);
