@@ -40,7 +40,7 @@ After performing LDL<sup>T</sup> decomposition, where the matrix \( A \) is deco
 4. **Solve for \( x \)**:
    - **Diagonal Scaling**: Solve the diagonal system \( D y = z \):
      \[
-     y_i = \frac{z_i}{D_i}
+     y_i = z_i/D_i
      \]
      where \( D_i \) is the diagonal element.
    - **Back Substitution**: Solve the upper triangular system \( L^T x = y \):
