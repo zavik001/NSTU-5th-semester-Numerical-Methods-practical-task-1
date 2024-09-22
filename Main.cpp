@@ -1,4 +1,4 @@
-#include "LDLT.hpp"
+#include "SLAUSolverLDLT.hpp"
 
 int main()
 {
@@ -10,15 +10,10 @@ int main()
         string fFilePath = "data/F.txt";
         string xFilePath = "data/X.txt";
 
-        LDLT ldlt(inputFilePath, alFilePath, dFilePath, fFilePath, xFilePath);
-        ldlt.printRestoredMatrix();
+        SLAUSolverLDLT ldlt(inputFilePath, alFilePath, dFilePath, fFilePath, xFilePath);
         ldlt.performLDLtDecomposition();
-        ldlt.printRestoredMatrix();
         ldlt.solveLinearSystem();
-        ldlt.returnMatix();
-        ldlt.printRestoredMatrix();
-        ldlt.printVectors();
-        ldlt.printMultiplyMatrixToVectorX();
+        ldlt.writeSolutionToFile();
     }
     catch (const exception &e)
     {
