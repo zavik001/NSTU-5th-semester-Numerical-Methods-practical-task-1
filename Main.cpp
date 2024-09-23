@@ -13,7 +13,9 @@ int main()
         SLAUSolverLDLT ldlt(inputFilePath, alFilePath, dFilePath, fFilePath, xFilePath);
         ldlt.performLDLtDecomposition();
         ldlt.solveLinearSystem();
-        ldlt.writeSolutionToFile();
+        ldlt.writeVectorFToFile();
+        ldlt.returnMatix();
+        ldlt.printMultiplyMatrixToVector();
     }
     catch (const exception &e)
     {

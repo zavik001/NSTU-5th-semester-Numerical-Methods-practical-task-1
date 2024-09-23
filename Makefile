@@ -9,6 +9,7 @@ CXX = g++
 CXXFLAGS_FLOAT = -DFF -Iinclude
 CXXFLAGS_DOUBLE = -DDD -Iinclude
 CXXFLAGS_LONG_DOUBLE = -DFD -Iinclude
+CXXOPENMP = -fopenmp
 
 # Directories with source and header files
 SRC_DIR = src
@@ -28,17 +29,17 @@ $(BUILD_DIR):
 # Rule for creating the float version
 $(TARGET_FLOAT): $(SRC)
 	@echo "Building float version..."
-	$(CXX) $(CXXFLAGS_FLOAT) -o $@ $(SRC)
+	$(CXX) $(CXXFLAGS_FLOAT) $(CXXOPENMP) -o $@ $(SRC)
 
 # Rule for creating the double version
 $(TARGET_DOUBLE): $(SRC)
 	@echo "Building double version..."
-	$(CXX) $(CXXFLAGS_DOUBLE) -o $@ $(SRC)
+	$(CXX) $(CXXFLAGS_DOUBLE) $(CXXOPENMP) -o $@ $(SRC)
 
 # Rule for creating the float double version
 $(TARGET_FLOAT_DOUBLE): $(SRC)
 	@echo "Building float double version..."
-	$(CXX) $(CXXFLAGS_LONG_DOUBLE) -o $@ $(SRC)
+	$(CXX) $(CXXFLAGS_LONG_DOUBLE) $(CXXOPENMP) -o $@ $(SRC)
 
 # Run the float version
 runFloat: $(TARGET_FLOAT)

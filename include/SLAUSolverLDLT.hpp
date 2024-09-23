@@ -1,9 +1,11 @@
 /**
  * @file SLAUSolverLDLT.hpp
- * @brief Header file for the SLAUSolverLDLT class.
+ * @brief Header file for solving systems of linear algebraic equations (SLAE) using the LDLT decomposition.
  *
- * Contains the declaration of the LDLT decomposition solver with banded matrix storage.
+ * This class implements the LDLT decomposition for symmetric matrices stored in a banded format,
+ * and methods for solving the resulting linear systems.
  */
+
 #ifndef SLAUSolverLDLT_HPP
 #define SLAUSolverLDLT_HPP
 
@@ -27,41 +29,39 @@ constexpr int PRECISION_DIGITS = 7;
 
 /**
  * @class SLAUSolverLDLT
- * @brief Class for solving systems of linear equations (SLAE) using LDLT decomposition.
- *
- * The matrix is stored in banded format. This class performs LDLT decomposition,
- * where L is a lower triangular matrix with 1's on the diagonal, and D is a diagonal matrix.
+ * @brief A class for solving SLAE using LDLT decomposition with a banded matrix format.
  */
 class SLAUSolverLDLT
 {
 private:
-    /// Banded format matrix A (stored in L) as a 2D vector
-    vector<vector<floatingPointType>> matrixAL;
+    vector<vector<floatingPointType>> matrixAL; ///< The lower triangular matrix in banded form (L)
+    vector<floatingPointType> diagD;            ///< The diagonal matrix (D)
+    vector<floatingPointType> vectorF;          ///< Vector used for solving the system
 
-    /// Diagonal elements of matrix D
-    vector<floatingPointType> diagD;
+    int n; ///< The size of the system (number of equations)
+    int m; ///< The bandwidth of the matrix
 
-    /// Vector F representing the right-hand side of the equation Ax = b
-    vector<floatingPointType> vectorF;
-
-    /// Number of equations (n) and bandwidth (m)
-    int n;
-    int m;
-
-    /// File paths for storing results and loading matrices
-    string solveFilePath;
-    string AlFilePath;
-    string DFilePath;
+    string solveFilePath; ///< Path to the file for output results
+    string AlFilePath;    ///< Path to the file containing matrix A (banded part)
+    string DFilePath;     ///< Path to the file containing diagonal matrix D
 
 public:
     /**
-     * @brief Constructor that initializes the solver with input file paths.
+     * @brief Initializes the matrix size and allocates memory.
      *
-     * @param inputFilePath Path to the file containing matrix dimensions.
-     * @param alFilePath Path to the file containing the lower triangular matrix (banded format).
-     * @param dFilePath Path to the file containing the diagonal matrix.
-     * @param fFilePath Path to the file containing the right-hand side vector.
-     * @param outputFilePath Path to the file where the solution will be written.
+     * @param a Number of equations (matrix size)
+     * @param b Matrix bandwidth
+     */
+    void initialize(int a, int b);
+
+    /**
+     * @brief Constructor that loads matrix and vector data from files.
+     *
+     * @param inputFilePath Path to the input file with system size
+     * @param alFilePath Path to the file with matrix A (banded part)
+     * @param dFilePath Path to the file with matrix D
+     * @param fFilePath Path to the file with the vector F
+     * @param outputFilePath Path to the file for saving the solution
      */
     SLAUSolverLDLT(const string &inputFilePath,
                    const string &alFilePath,
@@ -70,97 +70,129 @@ public:
                    const string &outputFilePath);
 
     /**
-     * @brief Loads matrix or vector data from a file.
+     * @brief Loads matrix dimensions from a file.
      *
-     * This method reads the matrix dimensions from the file.
-     * @param filePath The path to the file containing the matrix/vector data.
+     * @param filePath Path to the file with matrix dimensions
+     * @param a Reference to store the number of rows
+     * @param b Reference to store the matrix bandwidth
      */
-    void loadFromFile(const string &filePath);
+    void loadFromFile(const string &filePath, int &a, int &b);
 
     /**
-     * @brief Loads matrix data from a file into a 2D vector.
+     * @brief Loads a matrix from a file.
      *
-     * @param filePath Path to the file containing the matrix data.
-     * @param matrix 2D vector where the matrix data will be stored.
+     * @param filePath Path to the file containing the matrix
+     * @param matrix Reference to the matrix where data will be stored
      */
     void loadFromFile(const string &filePath, vector<vector<floatingPointType>> &matrix);
 
     /**
-     * @brief Loads vector data from a file into a 1D vector.
+     * @brief Loads a vector from a file.
      *
-     * @param filePath Path to the file containing the vector data.
-     * @param vector 1D vector where the data will be stored.
+     * @param filePath Path to the file containing the vector
+     * @param vector Reference to the vector where data will be stored
      */
     void loadFromFile(const string &filePath, vector<floatingPointType> &vector);
 
     /**
-     * @brief Performs the LDLT decomposition of the matrix A.
+     * @brief Performs LDLT decomposition of the matrix.
      *
-     * The method computes the lower triangular matrix L and diagonal matrix D.
+     * Decomposes the matrix A into L, D, and L^T where:
+     * L - Lower triangular matrix
+     * D - Diagonal matrix A
      */
     void performLDLtDecomposition();
 
     /**
-     * @brief Solves the system using forward substitution.
+     * @brief Solves the system using forward substitution for L * y = b.
      *
-     * This method solves the system Ly = b, where L is lower triangular.
+     * This method solves the first step of the LDLT process, where the matrix L is
+     * the lower triangular part and y is an intermediate solution vector.
      */
     void solveForwardSubstitution();
 
     /**
-     * @brief Solves the system with the diagonal matrix D.
+     * @brief Solves the system using diagonal substitution for D * z = y.
      *
-     * This method solves the system Dz = y, where D is diagonal.
+     * This method solves the second step of the LDLT process, where the matrix D
+     * is the diagonal matrix, and z is the solution vector after the diagonal substitution.
      */
     void solveDiagonalSubstitution();
 
     /**
-     * @brief Solves the system using backward substitution.
+     * @brief Solves the system using backward substitution for L^T * x = z.
      *
-     * This method solves the system L^T x = z, where L^T is the transpose of L.
+     * This method solves the final step of the LDLT process, where L^T is the transpose
+     * of the lower triangular matrix, and x is the final solution vector for the system.
      */
     void solveBackwardSubstitution();
 
     /**
-     * @brief Solves the complete linear system Ax = b.
+     * @brief Solves the full linear system using LDLT decomposition.
      *
-     * This method calls forward, diagonal, and backward substitutions in sequence.
+     * This method combines forward substitution, diagonal substitution, and backward
+     * substitution to find the solution of the system of linear equations.
      */
     void solveLinearSystem();
 
     /**
-     * @brief Writes the solution vector x to a file.
+     * @brief Writes the solution vector F to a file.
      *
-     * The solution is written to the file specified by solveFilePath.
+     * Saves the solution of the system to the specified file.
      */
-    void writeSolutionToFile();
+    void writeVectorFToFile();
 
     /**
-     * @brief Restores the matrix from files.
+     * @brief Prints the vector F to the console.
      *
-     * This method reloads matrix A (stored in L and D) from the corresponding files.
+     * Outputs the current state of the vector F, which contains the solution.
+     */
+    void printvectorF();
+
+    /**
+     * @brief Reloads the matrix and diagonal values from files.
+     *
+     * Re-initializes matrixAL and diagD by loading their values from files.
      */
     void returnMatix();
 
     /**
-     * @brief Prints the result of multiplying the restored matrix A by the solution vector X.
+     * @brief Multiplies the restored matrix (A = L + D) by the solution vector and prints the result.
+     *
+     * Computes the product of matrix A and vector X, where matrix A is reconstructed from
+     * its banded format representation, and prints the resulting vector.
      */
     void printMultiplyMatrixToVector();
 
     /**
-     * @brief Prints the solution vector.
+     * @brief Prints the fully restored matrix (A = L + D) to the console.
+     *
+     * Reconstructs and prints the original matrix A, which is the sum of the lower triangular
+     * matrix L and the diagonal matrix D, from the banded format.
      */
-    void printVector();
+    void printRestoredMatrix();
 
     /**
-     * @brief Prints the banded matrix AL.
+     * @brief Prints the lower triangular matrix (L) stored in banded format.
+     *
+     * Outputs the matrixAL to the console, showing the banded lower triangular part of the matrix.
      */
     void printMatrixAL();
 
     /**
-     * @brief Prints the restored matrix A from L and D.
+     * @brief Generates a Hilbert matrix in banded format and initializes vector F.
+     *
+     * Fills the matrixAL with values from a Hilbert matrix (used for testing numerical stability)
+     * and initializes the vectorF with values.
      */
-    void printRestoredMatrix();
+    void HilbertBandMatrix();
+
+    /**
+     * @brief Restores the Hilbert matrix in banded format after modifications.
+     *
+     * Recalculates the matrixAL and diagD using values from a Hilbert matrix.
+     */
+    void returnMatixAfterHilbert();
 };
 
 #endif // SLAUSolverLDLT_HPP
